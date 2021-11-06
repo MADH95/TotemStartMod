@@ -1,12 +1,8 @@
 ﻿using BepInEx;
 using BepInEx.Logging;
 using System;
-using System.Collections;
 using System.Collections.Generic;
-using System.Reflection;
 using System.Linq;
-using System.IO;
-using UnityEngine;
 using DiskCardGame;
 using HarmonyLib;
 
@@ -19,7 +15,7 @@ namespace TotemStartMod
 	{
 		private const string PluginGuid = "MADH.inscryption.TotemStartMod";
 		private const string PluginName = "TotemStartMod";
-		private const string PluginVersion = "1.0.0";
+		private const string PluginVersion = "1.1.0";
 
 		internal static ManualLogSource Log;
 
@@ -54,7 +50,7 @@ namespace TotemStartMod
 
 				if ( totem.body == null || totem.body == "" )
 					Logger.LogError( "Cannot load totem with no body" );
-				else if ( !Abilities.ContainsKey( totem.body ) || totem.body == "Sentry" )
+				else if ( !Abilities.ContainsKey( totem.body ) )
 					Logger.LogError( $"Cannot load totem with body name \"{totem.body}\"" );
 			}
 
@@ -75,8 +71,6 @@ namespace TotemStartMod
 				{
 					Tribe head = (Tribe)SeededRandom.Range( 1, Tribes.Count, SaveManager.SaveFile.GetCurrentRandomSeed() );
 					Ability body = (Ability)SeededRandom.Range( 1, Abilities.Count, SaveManager.SaveFile.GetCurrentRandomSeed() );
-					if ( body == Ability.Sentry )
-						body -= 8;
 
 					totem = ( head, body );
 				}
