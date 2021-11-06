@@ -2,7 +2,7 @@
 	"name": "TotemStartMod",
 	"version_number": "1.1.0",
 	"website_url": "https://github.com/MADH95/TotemStartMod",
-	"description": "This is a BepInEx plugin made for Incryption to add a random totem when you start a run. You can configure the files in MADH.inscruption.TotemStartMod.cfg",
+	"description": "This is a BepInEx plugin made for Incryption to add a random totem when you start a run. You can configure the files in MADH.inscryption.TotemStartMod.cfg",
 	"dependencies": [
 	]
 }
