@@ -1,9 +1,12 @@
-﻿using BepInEx;
-using BepInEx.Logging;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+
 using DiskCardGame;
+
+using BepInEx;
+using BepInEx.Logging;
+
 using HarmonyLib;
 
 
@@ -15,19 +18,13 @@ namespace TotemStartMod
 	{
 		private const string PluginGuid = "MADH.inscryption.TotemStartMod";
 		private const string PluginName = "TotemStartMod";
-		private const string PluginVersion = "1.1.0";
+		private const string PluginVersion = "1.1.1";
 
 		internal static ManualLogSource Log;
 
-		public bool getRandom()
-		{
-			return Config.Bind( PluginName, "Random Totem", true, new BepInEx.Configuration.ConfigDescription( "Load a random totem at the start of the run" ) ).Value;
-		}
+		public bool GetRandom() => Config.Bind( PluginName, "Random Totem", true, new BepInEx.Configuration.ConfigDescription( "Load a random totem at the start of the run" ) ).Value;
 
-		public (string head, string body) getTotem()
-		{
-			return (Config.Bind( PluginName, "Totem Head", "Squirrel" ).Value, Config.Bind( PluginName, "Totem Body", "DrawCopy" ).Value);
-		}
+		public (string head, string body) GetTotem() => (Config.Bind( PluginName, "Totem Head", "Squirrel" ).Value, Config.Bind( PluginName, "Totem Body", "DrawCopy" ).Value);
 
 		private void Awake()
 		{
@@ -37,21 +34,26 @@ namespace TotemStartMod
 			Harmony harmony = new Harmony(PluginGuid);
 			harmony.PatchAll();
 
-			bool random = getRandom();
+			Tribes.Remove( Tribe.None.ToString() );
+			Tribes.Remove( Tribe.NUM_TRIBES.ToString() );
+			Abilities.Remove( Ability.None.ToString() );
+			Abilities.Remove( Ability.NUM_ABILITIES.ToString() );
 
-			var totem = getTotem();
+			bool random = GetRandom();
 
-			if ( random )
+			var (head, body) = GetTotem();
+
+			if ( !random )
 			{
-				if ( totem.head == null || totem.head == "" )
+				if ( head == null || head == "" )
 					Logger.LogError( "Cannot load totem with no head" );
-				else if ( !Tribes.ContainsKey( totem.head ) )
-					Logger.LogError( $"Cannot load totem with head name \"{totem.head}\"" );
+				else if ( !Tribes.ContainsKey( head ) )
+					Logger.LogError( $"Cannot load totem with head name \"{ head }\"" );
 
-				if ( totem.body == null || totem.body == "" )
+				if ( body == null || body == "" )
 					Logger.LogError( "Cannot load totem with no body" );
-				else if ( !Abilities.ContainsKey( totem.body ) )
-					Logger.LogError( $"Cannot load totem with body name \"{totem.body}\"" );
+				else if ( !Abilities.ContainsKey( body ) )
+					Logger.LogError( $"Cannot load totem with body name \"{ body }\"" );
 			}
 
 		}
@@ -63,24 +65,39 @@ namespace TotemStartMod
 			{
 				Plugin p = new Plugin();
 
-				var strTotem = p.getTotem();
+				bool random = p.GetRandom();
 
-				( Tribe head, Ability body ) totem = ( Tribes[strTotem.head], Abilities[strTotem.body] );
+				var (strhead, strbody) = p.GetTotem();
 
-				if ( p.getRandom() )
+				( Tribe head, Ability body ) totem = ( Tribe.None, Ability.None );
+
+				if ( random )
 				{
 					Tribe head = (Tribe)SeededRandom.Range( 1, Tribes.Count, SaveManager.SaveFile.GetCurrentRandomSeed() );
 					Ability body = (Ability)SeededRandom.Range( 1, Abilities.Count, SaveManager.SaveFile.GetCurrentRandomSeed() );
 
-					totem = ( head, body );
+					totem = (head, body);
+				}
+				else if ( Tribes.ContainsKey( strhead ) )
+				{
+					if ( Abilities.ContainsKey( strbody ) )
+						totem = (Tribes[ strhead ], Abilities[ strbody ]);
+				}
+
+				if ( totem.head == Tribe.None || totem.body == Ability.None )
+				{
+					Log.LogError( "Could not load invalid totem" );
+					return false;
 				}
 
 				__instance.totemTops.Add( totem.head );
 				__instance.totemBottoms.Add( totem.body );
 
-				TotemDefinition totemDefinition = new TotemDefinition();
-				totemDefinition.tribe = totem.head;
-				totemDefinition.ability = totem.body;
+				TotemDefinition totemDefinition = new TotemDefinition
+				{
+					tribe = totem.head,
+					ability = totem.body
+				};
 				Run.totems.Clear();
 				Run.totems.Add( totemDefinition );
 
